@@ -5,9 +5,9 @@
 
 #define MAZE_WIDTH 19
 #define MAZE_HEIGHT 21
-#define CELL_SIZE 30
+#define CELL_SIZE 40  // 30'dan 40'a çıkarıldı
 #define SCREEN_WIDTH (MAZE_WIDTH * CELL_SIZE)
-#define SCREEN_HEIGHT (MAZE_HEIGHT * CELL_SIZE + 100)
+#define SCREEN_HEIGHT (MAZE_HEIGHT * CELL_SIZE + 120)  // UI alanı da büyütüldü
 #define MAX_GHOSTS 4
 
 typedef enum {
@@ -276,11 +276,11 @@ void DrawMaze(void) {
                 break;
             case DOT:
                 DrawCircle(x * CELL_SIZE + CELL_SIZE / 2,
-                    y * CELL_SIZE + CELL_SIZE / 2, 2, YELLOW);
+                    y * CELL_SIZE + CELL_SIZE / 2, 3, YELLOW);  // Nokta boyutu büyütüldü
                 break;
             case POWER_DOT:
                 DrawCircle(x * CELL_SIZE + CELL_SIZE / 2,
-                    y * CELL_SIZE + CELL_SIZE / 2, 8, YELLOW);
+                    y * CELL_SIZE + CELL_SIZE / 2, 10, YELLOW);  // Güçlü nokta boyutu büyütüldü
                 break;
             }
         }
@@ -291,62 +291,72 @@ void DrawPlayer(void) {
     if (!player.alive) return;
 
     Color playerColor = powerUpTimer > 0 ? GOLD : YELLOW;
+    int radius = CELL_SIZE / 2 - 3;  // Biraz daha büyük
     DrawCircle((int)(player.x * CELL_SIZE + CELL_SIZE / 2),
         (int)(player.y * CELL_SIZE + CELL_SIZE / 2),
-        CELL_SIZE / 2 - 2, playerColor);
+        radius, playerColor);
 
     // Ağız
     Vector2 center = { player.x * CELL_SIZE + CELL_SIZE / 2, player.y * CELL_SIZE + CELL_SIZE / 2 };
     float angle = player.direction * 90.0f;
 
-    DrawCircleSector(center, CELL_SIZE / 2 - 2, angle - 30, angle + 30, 10, BLACK);
+    DrawCircleSector(center, radius, angle - 30, angle + 30, 10, BLACK);
 }
 
 void DrawGhosts(void) {
     for (int i = 0; i < MAX_GHOSTS; i++) {
         Ghost* ghost = &ghosts[i];
         Color color = ghost->frightened ? DARKBLUE : ghost->color;
+        int radius = CELL_SIZE / 2 - 3;  // Biraz daha büyük
 
         DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2),
             (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2),
-            CELL_SIZE / 2 - 2, color);
+            radius, color);
 
-        // Gözler
-        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 - 6),
-            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - 4),
-            3, WHITE);
-        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 + 6),
-            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - 4),
-            3, WHITE);
-        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 - 6),
-            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - 4),
-            1, BLACK);
-        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 + 6),
-            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - 4),
-            1, BLACK);
+        // Gözler - boyutlar büyütüldü
+        int eyeOffsetX = 8;
+        int eyeOffsetY = 5;
+        int eyeRadius = 4;
+        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 - eyeOffsetX),
+            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - eyeOffsetY),
+            eyeRadius, WHITE);
+        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 + eyeOffsetX),
+            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - eyeOffsetY),
+            eyeRadius, WHITE);
+        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 - eyeOffsetX),
+            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - eyeOffsetY),
+            2, BLACK);
+        DrawCircle((int)(ghost->x * CELL_SIZE + CELL_SIZE / 2 + eyeOffsetX),
+            (int)(ghost->y * CELL_SIZE + CELL_SIZE / 2 - eyeOffsetY),
+            2, BLACK);
     }
 }
 
 void DrawUI(void) {
-    DrawText(TextFormat("Score: %d", score), 10, MAZE_HEIGHT * CELL_SIZE + 10, 20, WHITE);
-    DrawText(TextFormat("Dots: %d", dotsRemaining), 10, MAZE_HEIGHT * CELL_SIZE + 40, 20, WHITE);
+    int uiY = MAZE_HEIGHT * CELL_SIZE + 15;
+    int fontSize = 24;  // Font boyutu büyütüldü
+    
+    DrawText(TextFormat("Score: %d", score), 15, uiY, fontSize, WHITE);
+    DrawText(TextFormat("Dots: %d", dotsRemaining), 15, uiY + 30, fontSize, WHITE);
 
     if (powerUpTimer > 0) {
-        DrawText(TextFormat("Power: %.1f", powerUpTimer), 10, MAZE_HEIGHT * CELL_SIZE + 70, 20, GOLD);
+        DrawText(TextFormat("Power: %.1f", powerUpTimer), 15, uiY + 60, fontSize, GOLD);
         powerUpTimer -= GetFrameTime();
         if (powerUpTimer < 0) powerUpTimer = 0;
     }
 
     if (gameWon) {
-        DrawText("YOU WIN! Press R to restart", SCREEN_WIDTH / 2 - 140, SCREEN_HEIGHT / 2, 20, GREEN);
+        int textWidth = MeasureText("YOU WIN! Press R to restart", fontSize);
+        DrawText("YOU WIN! Press R to restart", (SCREEN_WIDTH - textWidth) / 2, SCREEN_HEIGHT / 2, fontSize, GREEN);
     }
     else if (gameOver) {
-        DrawText("GAME OVER! Press R to restart", SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2, 20, RED);
+        int textWidth = MeasureText("GAME OVER! Press R to restart", fontSize);
+        DrawText("GAME OVER! Press R to restart", (SCREEN_WIDTH - textWidth) / 2, SCREEN_HEIGHT / 2, fontSize, RED);
     }
 }
 
 int main(void) {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pacman - Raylib");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Pacman - Raylib (Enlarged)");
     SetTargetFPS(60);
 
     InitGame();
@@ -385,4 +395,4 @@ int main(void) {
     return 0;
 }
 
-//Lütfen compound literal ifadeleri ((Vector2){0,0} gibi) kullanma. 
+//Lütfen compound literal ifadeleri ((Vector2){0,0} gibi) kullanma.
